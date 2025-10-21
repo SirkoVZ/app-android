@@ -3,37 +3,24 @@ package org.volkszaehler.volkszaehlerapp.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.volkszaehler.volkszaehlerapp.data.local.SettingsDataStore
-import org.volkszaehler.volkszaehlerapp.domain.model.AppSettings
-import org.volkszaehler.volkszaehlerapp.domain.model.SortMode
+import org.volkszaehler.app.data.local.Settings
+import org.volkszaehler.app.data.local.SettingsDataStore
 import javax.inject.Inject
 
-/**
- * ViewModel for Settings Screen
- */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore
 ) : ViewModel() {
 
-    private val _settings = MutableStateFlow(AppSettings())
-    val settings: StateFlow<AppSettings> = _settings.asStateFlow()
-
-    init {
-        loadSettings()
-    }
-
-    private fun loadSettings() {
-        viewModelScope.launch {
-            settingsDataStore.settings.collect { settings ->
-                _settings.value = settings
-            }
-        }
-    }
+    val settings: StateFlow<Settings> = settingsDataStore.settings.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = Settings()
+    )
 
     fun updateServerUrl(url: String) {
         viewModelScope.launch {
@@ -41,45 +28,63 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun updateAuth(username: String, password: String) {
+    fun updateDefaultPeriod(period: String) {
         viewModelScope.launch {
-            settingsDataStore.updateAuth(username, password)
+            settingsDataStore.updateDefaultPeriod(period)
         }
     }
 
-    fun updatePrivateChannelUuids(uuids: String) {
+    fun updateChartType(type: String) {
         viewModelScope.launch {
-            settingsDataStore.updatePrivateChannelUuids(uuids)
+            settingsDataStore.updateChartType(type)
         }
     }
 
-    fun updateZeroBasedYAxis(enabled: Boolean) {
+    fun updateEnableCache(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.updateZeroBasedYAxis(enabled)
+            settingsDataStore.updateEnableCache(enabled)
         }
     }
 
-    fun updateAutoReload(enabled: Boolean) {
+    fun updateCacheDuration(duration: Int) {
         viewModelScope.launch {
-            settingsDataStore.updateAutoReload(enabled)
+            settingsDataStore.updateCacheDuration(duration)
         }
     }
 
-    fun updateSortChannelMode(mode: SortMode) {
+    fun updateThemeMode(mode: String) {
         viewModelScope.launch {
-            settingsDataStore.updateSortChannelMode(mode)
+            settingsDataStore.updateThemeMode(mode)
         }
     }
 
-    fun updateTuples(tuples: Int) {
+    fun updateUseDynamicColors(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.updateTuples(tuples)
+            settingsDataStore.updateUseDynamicColors(enabled)
         }
     }
 
-    fun clearAllSettings() {
+    fun updateAutoRefresh(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.clearAll()
+            settingsDataStore.updateAutoRefresh(enabled)
+        }
+    }
+
+    fun updateRefreshInterval(interval: Int) {
+        viewModelScope.launch {
+            settingsDataStore.updateRefreshInterval(interval)
+        }
+    }
+
+    fun updateShowGrid(show: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.updateShowGrid(show)
+        }
+    }
+
+    fun updateShowLegend(show: Boolean) {
+        viewModelScope.launch {
+            settingsDataStore.updateShowLegend(show)
         }
     }
 }

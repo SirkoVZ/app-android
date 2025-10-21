@@ -123,4 +123,7 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
     androidTestImplementation(composeBom)
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 }
