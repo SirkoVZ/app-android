@@ -1,4 +1,4 @@
-package org.volkszaehler.app.di
+package org.volkszaehler.volkszaehlerapp.di
 
 import android.content.Context
 import dagger.Module

@@ -1,4 +1,4 @@
-package org.volkszaehler.app.data.local
+package org.volkszaehler.volkszaehlerapp.data.local
 
 import android.content.Context
 import androidx.datastore.core.DataStore

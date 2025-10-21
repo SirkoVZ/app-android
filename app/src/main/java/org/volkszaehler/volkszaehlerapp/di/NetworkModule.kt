@@ -1,91 +1,52 @@
 package org.volkszaehler.volkszaehlerapp.di
 
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import android.content.Context
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
+import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import okhttp3.OkHttpClient
-import okhttp3.logging.HttpLoggingInterceptor
-import org.volkszaehler.volkszaehlerapp.data.remote.VolkszaehlerApi
+import org.volkszaehler.volkszaehlerapp.data.local.SettingsDataStore
+import org.volkszaehler.volkszaehlerapp.network.ApiService
 import retrofit2.Retrofit
-import retrofit2.converter.moshi.MoshiConverterFactory
-import java.util.concurrent.TimeUnit
+import retrofit2.converter.gson.GsonConverterFactory
 import javax.inject.Singleton
 
-/**
- * Dagger Hilt module for network dependencies
- */
 @Module
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    /**
-     * Provides Moshi instance for JSON parsing
-     */
     @Provides
     @Singleton
-    fun provideMoshi(): Moshi {
-        return Moshi.Builder()
-            .add(KotlinJsonAdapterFactory())
-            .build()
-    }
-
-    /**
-     * Provides HTTP logging interceptor for debugging
-     */
-    @Provides
-    @Singleton
-    fun provideLoggingInterceptor(): HttpLoggingInterceptor {
-        return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
-        }
-    }
-
-    /**
-     * Provides OkHttpClient with logging and timeouts
-     */
-    @Provides
-    @Singleton
-    fun provideOkHttpClient(
-        loggingInterceptor: HttpLoggingInterceptor
-    ): OkHttpClient {
+    fun provideOkHttpClient(): OkHttpClient {
         return OkHttpClient.Builder()
-            .addInterceptor(loggingInterceptor)
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
-    /**
-     * Provides Retrofit instance
-     *
-     * Note: Base URL should be configured in SharedPreferences
-     * This is a placeholder that will be overridden at runtime
-     */
     @Provides
     @Singleton
     fun provideRetrofit(
         okHttpClient: OkHttpClient,
-        moshi: Moshi
+        @ApplicationContext context: Context
     ): Retrofit {
+        val settingsDataStore = SettingsDataStore(context)
+        val baseUrl = runBlocking {
+            settingsDataStore.baseUrlFlow.first()
+        }
+
         return Retrofit.Builder()
-            .baseUrl("http://demo.volkszaehler.org/middleware.php/") // Default/Demo URL
+            .baseUrl(baseUrl)
             .client(okHttpClient)
-            .addConverterFactory(MoshiConverterFactory.create(moshi))
+            .addConverterFactory(GsonConverterFactory.create())
             .build()
     }
 
-    /**
-     * Provides VolkszaehlerApi instance
-     */
     @Provides
     @Singleton
-    fun provideVolkszaehlerApi(
-        retrofit: Retrofit
-    ): VolkszaehlerApi {
-        return retrofit.create(VolkszaehlerApi::class.java)
+    fun provideApiService(retrofit: Retrofit): ApiService {
+        return retrofit.create(ApiService::class.java)
     }
 }
