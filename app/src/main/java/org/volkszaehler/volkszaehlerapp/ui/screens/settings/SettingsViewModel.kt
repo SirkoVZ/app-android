@@ -4,107 +4,82 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.volkszaehler.volkszaehlerapp.data.local.SettingsDataStore
+import org.volkszaehler.volkszaehlerapp.domain.model.AppSettings
+import org.volkszaehler.volkszaehlerapp.domain.model.SortMode
 import javax.inject.Inject
 
+/**
+ * ViewModel for Settings Screen
+ */
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsDataStore: SettingsDataStore
 ) : ViewModel() {
 
-    val serverUrl: StateFlow<String?> = settingsDataStore.serverUrl
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    private val _settings = MutableStateFlow(AppSettings())
+    val settings: StateFlow<AppSettings> = _settings.asStateFlow()
 
-    val username: StateFlow<String?> = settingsDataStore.username
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
+    init {
+        loadSettings()
+    }
 
-    val password: StateFlow<String?> = settingsDataStore.password
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
-
-    val zeroBasedYAxis: StateFlow<Boolean> = settingsDataStore.zeroBasedYAxis
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val autoReload: StateFlow<Boolean> = settingsDataStore.autoReload
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
-
-    val sortMode: StateFlow<Int> = settingsDataStore.sortMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
-
-    val tuplesLimit: StateFlow<Int> = settingsDataStore.tuplesLimit
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1000)
-
-    private val _saveStatus = MutableStateFlow<SaveStatus>(SaveStatus.Idle)
-    val saveStatus: StateFlow<SaveStatus> = _saveStatus.asStateFlow()
+    private fun loadSettings() {
+        viewModelScope.launch {
+            settingsDataStore.settings.collect { settings ->
+                _settings.value = settings
+            }
+        }
+    }
 
     fun updateServerUrl(url: String) {
         viewModelScope.launch {
-            settingsDataStore.setServerUrl(url)
+            settingsDataStore.updateServerUrl(url)
         }
     }
 
-    fun updateUsername(user: String) {
+    fun updateAuth(username: String, password: String) {
         viewModelScope.launch {
-            settingsDataStore.setUsername(user)
+            settingsDataStore.updateAuth(username, password)
         }
     }
 
-    fun updatePassword(pass: String) {
+    fun updatePrivateChannelUuids(uuids: String) {
         viewModelScope.launch {
-            settingsDataStore.setPassword(pass)
+            settingsDataStore.updatePrivateChannelUuids(uuids)
         }
     }
 
     fun updateZeroBasedYAxis(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.setZeroBasedYAxis(enabled)
+            settingsDataStore.updateZeroBasedYAxis(enabled)
         }
     }
 
     fun updateAutoReload(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.setAutoReload(enabled)
+            settingsDataStore.updateAutoReload(enabled)
         }
     }
 
-    fun updateSortMode(mode: Int) {
+    fun updateSortChannelMode(mode: SortMode) {
         viewModelScope.launch {
-            settingsDataStore.setSortMode(mode)
+            settingsDataStore.updateSortChannelMode(mode)
         }
     }
 
-    fun updateTuplesLimit(limit: Int) {
+    fun updateTuples(tuples: Int) {
         viewModelScope.launch {
-            settingsDataStore.setTuplesLimit(limit)
+            settingsDataStore.updateTuples(tuples)
         }
     }
 
-    fun saveSettings() {
-        viewModelScope.launch {
-            _saveStatus.value = SaveStatus.Saving
-            try {
-                // Settings are automatically saved via DataStore
-                _saveStatus.value = SaveStatus.Success
-            } catch (e: Exception) {
-                _saveStatus.value = SaveStatus.Error(e.message ?: "Unknown error")
-            }
-        }
-    }
-
-    fun clearSettings() {
+    fun clearAllSettings() {
         viewModelScope.launch {
             settingsDataStore.clearAll()
         }
     }
-}
-
-sealed class SaveStatus {
-    data object Idle : SaveStatus()
-    data object Saving : SaveStatus()
-    data object Success : SaveStatus()
-    data class Error(val message: String) : SaveStatus()
 }

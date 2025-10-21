@@ -7,12 +7,15 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.runBlocking
+import org.volkszaehler.volkszaehlerapp.domain.model.AppSettings
+import org.volkszaehler.volkszaehlerapp.domain.model.SortMode
 import javax.inject.Inject
 import javax.inject.Singleton
 
+/**
+ * DataStore for app settings
+ */
 @Singleton
 class SettingsDataStore @Inject constructor(
     private val dataStore: DataStore<Preferences>
@@ -21,65 +24,98 @@ class SettingsDataStore @Inject constructor(
         private val SERVER_URL = stringPreferencesKey("server_url")
         private val USERNAME = stringPreferencesKey("username")
         private val PASSWORD = stringPreferencesKey("password")
-        private val PRIVATE_CHANNELS = stringPreferencesKey("private_channels")
+        private val PRIVATE_CHANNEL_UUIDS = stringPreferencesKey("private_channel_uuids")
         private val ZERO_BASED_Y_AXIS = booleanPreferencesKey("zero_based_y_axis")
         private val AUTO_RELOAD = booleanPreferencesKey("auto_reload")
-        private val SORT_MODE = intPreferencesKey("sort_mode")
-        private val TUPLES_LIMIT = intPreferencesKey("tuples_limit")
+        private val SORT_CHANNEL_MODE = stringPreferencesKey("sort_channel_mode")
+        private val TUPLES = intPreferencesKey("tuples")
     }
 
-    // Server URL
-    val serverUrl: Flow<String?> = dataStore.data.map { it[SERVER_URL] }
-    suspend fun setServerUrl(url: String) {
-        dataStore.edit { it[SERVER_URL] = url }
-    }
-    fun getServerUrl(): String? = runBlocking { serverUrl.first() }
-
-    // Username
-    val username: Flow<String?> = dataStore.data.map { it[USERNAME] }
-    suspend fun setUsername(user: String) {
-        dataStore.edit { it[USERNAME] = user }
-    }
-    fun getUsername(): String? = runBlocking { username.first() }
-
-    // Password
-    val password: Flow<String?> = dataStore.data.map { it[PASSWORD] }
-    suspend fun setPassword(pass: String) {
-        dataStore.edit { it[PASSWORD] = pass }
-    }
-    fun getPassword(): String? = runBlocking { password.first() }
-
-    // Private Channels (comma-separated UUIDs)
-    val privateChannels: Flow<String?> = dataStore.data.map { it[PRIVATE_CHANNELS] }
-    suspend fun setPrivateChannels(channels: String) {
-        dataStore.edit { it[PRIVATE_CHANNELS] = channels }
+    /**
+     * Get settings as Flow
+     */
+    val settings: Flow<AppSettings> = dataStore.data.map { preferences ->
+        AppSettings(
+            serverUrl = preferences[SERVER_URL] ?: "http://demo.volkszaehler.org/middleware.php",
+            username = preferences[USERNAME] ?: "",
+            password = preferences[PASSWORD] ?: "",
+            privateChannelUuids = preferences[PRIVATE_CHANNEL_UUIDS] ?: "",
+            zeroBasedYAxis = preferences[ZERO_BASED_Y_AXIS] ?: false,
+            autoReload = preferences[AUTO_RELOAD] ?: false,
+            sortChannelMode = SortMode.valueOf(
+                preferences[SORT_CHANNEL_MODE] ?: SortMode.GROUPS.name
+            ),
+            tuples = preferences[TUPLES] ?: 1000
+        )
     }
 
-    // Zero-based Y-Axis
-    val zeroBasedYAxis: Flow<Boolean> = dataStore.data.map { it[ZERO_BASED_Y_AXIS] ?: false }
-    suspend fun setZeroBasedYAxis(enabled: Boolean) {
-        dataStore.edit { it[ZERO_BASED_Y_AXIS] = enabled }
+    /**
+     * Update server URL
+     */
+    suspend fun updateServerUrl(url: String) {
+        dataStore.edit { preferences ->
+            preferences[SERVER_URL] = url
+        }
     }
 
-    // Auto Reload
-    val autoReload: Flow<Boolean> = dataStore.data.map { it[AUTO_RELOAD] ?: false }
-    suspend fun setAutoReload(enabled: Boolean) {
-        dataStore.edit { it[AUTO_RELOAD] = enabled }
+    /**
+     * Update authentication credentials
+     */
+    suspend fun updateAuth(username: String, password: String) {
+        dataStore.edit { preferences ->
+            preferences[USERNAME] = username
+            preferences[PASSWORD] = password
+        }
     }
 
-    // Sort Mode (0 = Off, 1 = Groups, 2 = All)
-    val sortMode: Flow<Int> = dataStore.data.map { it[SORT_MODE] ?: 0 }
-    suspend fun setSortMode(mode: Int) {
-        dataStore.edit { it[SORT_MODE] = mode }
+    /**
+     * Update private channel UUIDs
+     */
+    suspend fun updatePrivateChannelUuids(uuids: String) {
+        dataStore.edit { preferences ->
+            preferences[PRIVATE_CHANNEL_UUIDS] = uuids
+        }
     }
 
-    // Tuples Limit
-    val tuplesLimit: Flow<Int> = dataStore.data.map { it[TUPLES_LIMIT] ?: 1000 }
-    suspend fun setTuplesLimit(limit: Int) {
-        dataStore.edit { it[TUPLES_LIMIT] = limit }
+    /**
+     * Update zero based Y axis setting
+     */
+    suspend fun updateZeroBasedYAxis(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[ZERO_BASED_Y_AXIS] = enabled
+        }
     }
 
-    // Clear all settings
+    /**
+     * Update auto reload setting
+     */
+    suspend fun updateAutoReload(enabled: Boolean) {
+        dataStore.edit { preferences ->
+            preferences[AUTO_RELOAD] = enabled
+        }
+    }
+
+    /**
+     * Update sort channel mode
+     */
+    suspend fun updateSortChannelMode(mode: SortMode) {
+        dataStore.edit { preferences ->
+            preferences[SORT_CHANNEL_MODE] = mode.name
+        }
+    }
+
+    /**
+     * Update tuples setting
+     */
+    suspend fun updateTuples(tuples: Int) {
+        dataStore.edit { preferences ->
+            preferences[TUPLES] = tuples
+        }
+    }
+
+    /**
+     * Clear all settings
+     */
     suspend fun clearAll() {
         dataStore.edit { it.clear() }
     }
