@@ -1,3 +1,277 @@
+Volkszähler Android App
+
+Eine moderne Android-App für das Volkszähler-Projekt, entwickelt mit Jetpack Compose, Kotlin und Clean Architecture.
+
+Features
+
+Kanal-Übersicht: Anzeige aller verfügbaren Volkszähler-Kanäle
+Suchfunktion: Schnelles Filtern von Kanälen
+Interaktive Diagramme: Visualisierung von Messdaten mit verschiedenen Zeitbereichen
+Offline-Support: Lokales Caching mit Room Database
+Material Design 3: Moderne UI mit Dynamic Colors
+Dark Mode: Automatische Unterstützung für helle und dunkle Themes
+
+Technologie-Stack
+
+Core
+Kotlin - Programmiersprache
+Jetpack Compose - Deklaratives UI Framework
+Material Design 3 - UI/UX Design System
+Coroutines & Flow - Asynchrone Programmierung
+
+Architecture
+MVVM - Model-View-ViewModel Pattern
+Clean Architecture - Separation of Concerns
+Repository Pattern - Datenabstraktion
+Dependency Injection - Hilt/Dagger
+
+Networking
+Retrofit - REST API Client
+OkHttp - HTTP Client
+Moshi - JSON Serialisierung
+
+Database
+Room - Lokale SQLite Datenbank
+Flow - Reaktive Datenströme
+
+UI Components
+Navigation Compose - App-Navigation
+YCharts - Diagramm-Bibliothek
+Material Icons - Icon-Set
+
+Utilities
+Timber - Logging Framework
+SharedPreferences - Einstellungen
+
+Projektstruktur
+
+app/
+├── data/
+│   ├── local/
+│   │   ├── AppDatabase.kt
+│   │   └── ChannelDao.kt
+│   ├── model/
+│   │   ├── Channel.kt
+│   │   ├── ChannelData.kt
+│   │   └── DataTuple.kt
+│   ├── remote/
+│   │   └── VolkszaehlerApiService.kt
+│   └── repository/
+│       └── VolkszaehlerRepository.kt
+├── di/
+│   ├── NetworkModule.kt
+│   └── DatabaseModule.kt
+├── ui/
+│   ├── channellist/
+│   │   ├── ChannelListScreen.kt
+│   │   └── ChannelListViewModel.kt
+│   ├── chart/
+│   │   ├── ChartScreen.kt
+│   │   └── ChartViewModel.kt
+│   ├── navigation/
+│   │   └── Navigation.kt
+│   └── theme/
+│       ├── Theme.kt
+│       └── Type.kt
+├── util/
+│   ├── NetworkResult.kt
+│   └── PreferencesManager.kt
+├── MainActivity.kt
+└── VolkszaehlerApplication.kt
+
+
+Installation
+
+Voraussetzungen
+
+Android Studio Hedgehog (2023.1.1) oder neuer
+JDK 17
+Android SDK 34
+Minimum SDK: 24 (Android 7.0)
+
+Setup
+
+Repository klonen
+git clone https://github.com/yourusername/volkszaehler-app.git
+cd volkszaehler-app
+
+
+Projekt in Android Studio öffnen
+- File → Open → Projektordner auswählen
+
+Gradle Sync durchführen
+- Android Studio synchronisiert automatisch die Dependencies
+
+App starten
+- Emulator oder physisches Gerät verbinden
+- Run → Run 'app'
+
+Konfiguration
+
+API Endpoint
+
+Die Standard-API-URL ist http://demo.volkszaehler.org/middleware.php/
+
+Zum Ändern der URL:
+// In PreferencesManager.kt
+private const val DEFAULT\BASE\URL = "https://your-volkszaehler-instance.com/middleware.php/"
+
+
+Build Variants
+
+Debug: Aktiviertes Logging, keine Code-Optimierung
+Release: Deaktiviertes Logging, ProGuard-Optimierung
+
+API Endpoints
+
+Die App nutzt folgende Volkszähler-API-Endpoints:
+
+Kanäle abrufen
+GET /entity.json
+
+
+Kanal-Daten abrufen
+GET /data/{uuid}.json?from={timestamp}&to={timestamp}&group={grouping}
+
+Parameter:
+uuid: Kanal-UUID
+from: Start-Timestamp (Millisekunden)
+to: End-Timestamp (Millisekunden)
+group: Gruppierung (hour, day, week, month, year)
+
+Verwendung
+
+Kanal-Liste
+
+App öffnen → Kanal-Liste wird automatisch geladen
+Suchen: Suchfeld nutzen zum Filtern
+Aktualisieren: Refresh-Button in der TopBar
+Kanal auswählen: Checkbox aktivieren für Favoriten
+Details öffnen: Auf Kanal tippen für Diagramm
+
+Diagramm-Ansicht
+
+Kanal in der Liste antippen
+Zeitbereich wählen: Chips oben (1h, 1d, 1w, 1m, 1y)
+Interaktion: Diagramm-Punkte antippen für Details
+Statistiken: Scrollen für Min/Max/Durchschnitt
+Zurück: Back-Button oder Geste
+
+Dependencies
+
+// Core
+androidx.core:core-ktx:1.12.0
+androidx.lifecycle:lifecycle-runtime-ktx:2.6.2
+
+// Compose
+androidx.compose.ui:ui
+androidx.compose.material3:material3
+androidx.navigation:navigation-compose:2.7.5
+
+// Hilt
+com.google.dagger:hilt-android:2.48.1
+androidx.hilt:hilt-navigation-compose:1.1.0
+
+// Networking
+com.squareup.retrofit2:retrofit:2.9.0
+com.squareup.okhttp3:okhttp:4.12.0
+
+// Database
+androidx.room:room-runtime:2.6.1
+androidx.room:room-ktx:2.6.1
+
+// Charts
+co.yml:ycharts:2.1.0
+
+// Utilities
+com.jakewharton.timber:timber:5.0.1
+
+
+Testing
+
+Unit Tests
+./gradlew test
+
+
+Instrumented Tests
+./gradlew connectedAndroidTest
+
+
+Build
+
+Debug Build
+./gradlew assembleDebug
+
+
+Release Build
+./gradlew assembleRelease
+
+
+APK-Datei: app/build/outputs/apk/release/app-release.apk
+
+Troubleshooting
+
+Netzwerkfehler
+Problem "Netzwerkfehler" beim Laden der Kanäle
+Lösung
+Internetverbindung prüfen
+API-URL in PreferencesManager.kt überprüfen
+usesCleartextTraffic="true" in AndroidManifest.xml (für HTTP)
+
+Build-Fehler
+Problem Gradle Sync fehlgeschlagen
+Lösung
+./gradlew clean
+./gradlew build --refresh-dependencies
+
+
+Room Database Fehler
+Problem Schema-Änderungen führen zu Crashes
+Lösung
+App deinstallieren und neu installieren
+Oder: fallbackToDestructiveMigration() ist bereits aktiviert
+
+Roadmap
+
+[ ] Multi-Channel Diagramme
+[ ] Export-Funktion (CSV, PDF)
+[ ] Push-Benachrichtigungen bei Schwellwerten
+[ ] Widget für Homescreen
+[ ] Tablet-Optimierung
+[ ] Wear OS Support
+
+Contributing
+
+Contributions sind willkommen! Bitte:
+
+Fork das Repository
+Feature Branch erstellen (git checkout -b feature/AmazingFeature)
+Änderungen committen (git commit -m 'Add AmazingFeature')
+Branch pushen (git push origin feature/AmazingFeature)
+Pull Request öffnen
+
+Lizenz
+
+Dieses Projekt ist unter der GPL-3.0 License lizenziert - siehe LICENSE Datei für Details.
+
+Kontakt
+Projekt Volkszähler Android App  
+Website https://volkszaehler.org  
+GitHub https://github.com/volkszaehler
+
+Danksagungen
+
+Volkszähler-Team - Für das großartige Backend-System
+YCharts - Für die Chart-Bibliothek
+Android Community - Für Jetpack Compose und moderne Tools
+
+Hinweis Diese App ist ein Community-Projekt und nicht offiziell vom Volkszähler-Team unterstützt.
+
+
+
+
+
+
 # Volkszaehler Frontend for Android 
 App Language: english, deutsch  
 **(English description below)**

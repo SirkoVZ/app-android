@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- themes.xml -->
+<!-- Datei: app/src/main/res/values/themes.xml -->
+
+<resources>
+    <!-- Base application theme (wird von Compose überschrieben) -->
+    <style name="Theme.VolkszaehlerApp" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Compose übernimmt das komplette Theming -->
+    </style>
+</resources>
