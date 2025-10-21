@@ -1,185 +1,86 @@
 package org.volkszaehler.volkszaehlerapp.data.local
 
-import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
-import androidx.datastore.preferences.preferencesDataStore
-import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Settings DataStore - Ersetzt volkszaehler_preferences.xml
- *
- * Moderne Alternative zu SharedPreferences/XML Preferences.
- * Verwendet Kotlin Coroutines und Flow für reaktive Updates.
- *
- * Alle Settings aus der alten XML-Datei:
- * - volkszaehlerURL
- * - username / password (Basic Auth)
- * - privateChannelUUIDs
- * - ZeroBasedYAxis
- * - autoReload
- * - sortChannelsMode
- * - tuplesLimit
- */
-
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
-    name = "volkszaehler_settings"
-)
-
 @Singleton
 class SettingsDataStore @Inject constructor(
-    @ApplicationContext private val context: Context
+    private val dataStore: DataStore<Preferences>
 ) {
-
-    // ========== PREFERENCE KEYS ==========
-
     companion object {
-        // Server Settings
-        val SERVER_URL = stringPreferencesKey("volkszaehlerURL")
-
-        // Authentication
-        val USERNAME = stringPreferencesKey("username")
-        val PASSWORD = stringPreferencesKey("password")
-
-        // Channel Settings
-        val PRIVATE_CHANNEL_UUIDS = stringPreferencesKey("privateChannelUUIDs")
-
-        // Chart Settings
-        val ZERO_BASED_Y_AXIS = booleanPreferencesKey("ZeroBasedYAxis")
-
-        // Reload Settings
-        val AUTO_RELOAD = booleanPreferencesKey("autoReload")
-
-        // Sort Settings
-        val SORT_CHANNELS_MODE = stringPreferencesKey("sortChannelsMode")
-
-        // Data Settings
-        val TUPLES_LIMIT = intPreferencesKey("tuplesLimit")
-
-        // Defaults
-        const val DEFAULT_SERVER_URL = "http://demo.volkszaehler.org/middleware.php/"
-        const val DEFAULT_TUPLES_LIMIT = 1000
+        private val SERVER_URL = stringPreferencesKey("server_url")
+        private val USERNAME = stringPreferencesKey("username")
+        private val PASSWORD = stringPreferencesKey("password")
+        private val PRIVATE_CHANNELS = stringPreferencesKey("private_channels")
+        private val ZERO_BASED_Y_AXIS = booleanPreferencesKey("zero_based_y_axis")
+        private val AUTO_RELOAD = booleanPreferencesKey("auto_reload")
+        private val SORT_MODE = intPreferencesKey("sort_mode")
+        private val TUPLES_LIMIT = intPreferencesKey("tuples_limit")
     }
 
-    // ========== SERVER URL ==========
-
-    val serverUrl: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[SERVER_URL] ?: DEFAULT_SERVER_URL
-    }
-
+    // Server URL
+    val serverUrl: Flow<String?> = dataStore.data.map { it[SERVER_URL] }
     suspend fun setServerUrl(url: String) {
-        context.dataStore.edit { preferences ->
-            preferences[SERVER_URL] = url
-        }
+        dataStore.edit { it[SERVER_URL] = url }
+    }
+    fun getServerUrl(): String? = runBlocking { serverUrl.first() }
+
+    // Username
+    val username: Flow<String?> = dataStore.data.map { it[USERNAME] }
+    suspend fun setUsername(user: String) {
+        dataStore.edit { it[USERNAME] = user }
+    }
+    fun getUsername(): String? = runBlocking { username.first() }
+
+    // Password
+    val password: Flow<String?> = dataStore.data.map { it[PASSWORD] }
+    suspend fun setPassword(pass: String) {
+        dataStore.edit { it[PASSWORD] = pass }
+    }
+    fun getPassword(): String? = runBlocking { password.first() }
+
+    // Private Channels (comma-separated UUIDs)
+    val privateChannels: Flow<String?> = dataStore.data.map { it[PRIVATE_CHANNELS] }
+    suspend fun setPrivateChannels(channels: String) {
+        dataStore.edit { it[PRIVATE_CHANNELS] = channels }
     }
 
-    // ========== AUTHENTICATION ==========
-
-    val username: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[USERNAME] ?: ""
-    }
-
-    suspend fun setUsername(username: String) {
-        context.dataStore.edit { preferences ->
-            preferences[USERNAME] = username
-        }
-    }
-
-    val password: Flow<String> = context.dataStore.data.map { preferences ->
-        preferences[PASSWORD] ?: ""
-    }
-
-    suspend fun setPassword(password: String) {
-        context.dataStore.edit { preferences ->
-            preferences[PASSWORD] = password
-        }
-    }
-
-    // ========== PRIVATE CHANNELS ==========
-
-    val privateChannelUUIDs: Flow<List<String>> = context.dataStore.data.map { preferences ->
-        preferences[PRIVATE_CHANNEL_UUIDS]
-            ?.split(",")
-            ?.map { it.trim() }
-            ?.filter { it.isNotEmpty() }
-            ?: emptyList()
-    }
-
-    suspend fun setPrivateChannelUUIDs(uuids: List<String>) {
-        context.dataStore.edit { preferences ->
-            preferences[PRIVATE_CHANNEL_UUIDS] = uuids.joinToString(",")
-        }
-    }
-
-    // ========== CHART SETTINGS ==========
-
-    val zeroBasedYAxis: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[ZERO_BASED_Y_AXIS] ?: false
-    }
-
+    // Zero-based Y-Axis
+    val zeroBasedYAxis: Flow<Boolean> = dataStore.data.map { it[ZERO_BASED_Y_AXIS] ?: false }
     suspend fun setZeroBasedYAxis(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[ZERO_BASED_Y_AXIS] = enabled
-        }
+        dataStore.edit { it[ZERO_BASED_Y_AXIS] = enabled }
     }
 
-    // ========== AUTO RELOAD ==========
-
-    val autoReload: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[AUTO_RELOAD] ?: false
-    }
-
+    // Auto Reload
+    val autoReload: Flow<Boolean> = dataStore.data.map { it[AUTO_RELOAD] ?: false }
     suspend fun setAutoReload(enabled: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[AUTO_RELOAD] = enabled
-        }
+        dataStore.edit { it[AUTO_RELOAD] = enabled }
     }
 
-    // ========== SORT MODE ==========
-
-    enum class SortMode {
-        NAME, TYPE, LAST_VALUE
+    // Sort Mode (0 = Off, 1 = Groups, 2 = All)
+    val sortMode: Flow<Int> = dataStore.data.map { it[SORT_MODE] ?: 0 }
+    suspend fun setSortMode(mode: Int) {
+        dataStore.edit { it[SORT_MODE] = mode }
     }
 
-    val sortChannelsMode: Flow<SortMode> = context.dataStore.data.map { preferences ->
-        when (preferences[SORT_CHANNELS_MODE]) {
-            "type" -> SortMode.TYPE
-            "lastValue" -> SortMode.LAST_VALUE
-            else -> SortMode.NAME
-        }
-    }
-
-    suspend fun setSortChannelsMode(mode: SortMode) {
-        context.dataStore.edit { preferences ->
-            preferences[SORT_CHANNELS_MODE] = when (mode) {
-                SortMode.NAME -> "name"
-                SortMode.TYPE -> "type"
-                SortMode.LAST_VALUE -> "lastValue"
-            }
-        }
-    }
-
-    // ========== TUPLES LIMIT ==========
-
-    val tuplesLimit: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[TUPLES_LIMIT] ?: DEFAULT_TUPLES_LIMIT
-    }
-
+    // Tuples Limit
+    val tuplesLimit: Flow<Int> = dataStore.data.map { it[TUPLES_LIMIT] ?: 1000 }
     suspend fun setTuplesLimit(limit: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[TUPLES_LIMIT] = limit
-        }
+        dataStore.edit { it[TUPLES_LIMIT] = limit }
     }
 
-    // ========== CLEAR ALL ==========
-
+    // Clear all settings
     suspend fun clearAll() {
-        context.dataStore.edit { preferences ->
-            preferences.clear()
-        }
+        dataStore.edit { it.clear() }
     }
 }

@@ -1,33 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- App Name -->
     <string name="app_name">Volkszähler</string>
 
+    <!-- Navigation -->
+    <string name="nav_channels">Kanäle</string>
+    <string name="nav_settings">Einstellungen</string>
+
     <!-- Channel List -->
-    <string name="channel_list_title">Kanäle</string>
-    <string name="search_channels">Kanäle suchen…</string>
+    <string name="channel_list_title">Meine Kanäle</string>
+    <string name="channel_list_empty">Keine Kanäle vorhanden</string>
+    <string name="channel_add">Kanal hinzufügen</string>
+
+    <!-- Channel Detail -->
+    <string name="channel_detail_title">Kanal Details</string>
+    <string name="channel_current_value">Aktueller Wert</string>
+    <string name="channel_chart">Verlauf</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_server_url">Server URL</string>
+    <string name="settings_server_url_hint">https://demo.volkszaehler.org</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_light">Hell</string>
+    <string name="settings_theme_dark">Dunkel</string>
+    <string name="settings_theme_system">System</string>
+
+    <!-- Time Ranges -->
+    <string name="time_range_day">Tag</string>
+    <string name="time_range_week">Woche</string>
+    <string name="time_range_month">Monat</string>
+    <string name="time_range_year">Jahr</string>
+
+    <!-- Common -->
+    <string name="ok">OK</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="save">Speichern</string>
+    <string name="delete">Löschen</string>
     <string name="refresh">Aktualisieren</string>
-    <string name="no_channels_found">Keine Kanäle gefunden</string>
+    <string name="loading">Lädt…</string>
+    <string name="error">Fehler</string>
     <string name="retry">Erneut versuchen</string>
-
-    <!-- Chart -->
-    <string name="chart_title">Diagramm</string>
-    <string name="back">Zurück</string>
-    <string name="time_range_hour">1 Stunde</string>
-    <string name="time_range_day">1 Tag</string>
-    <string name="time_range_week">1 Woche</string>
-    <string name="time_range_month">1 Monat</string>
-    <string name="time_range_year">1 Jahr</string>
-
-    <!-- Statistics -->
-    <string name="statistics">Statistiken</string>
-    <string name="minimum">Minimum</string>
-    <string name="maximum">Maximum</string>
-    <string name="average">Durchschnitt</string>
-    <string name="consumption">Verbrauch</string>
-    <string name="data_points">Datenpunkte</string>
 
     <!-- Errors -->
     <string name="error_network">Netzwerkfehler</string>
+    <string name="error_server">Serverfehler</string>
     <string name="error_unknown">Unbekannter Fehler</string>
-    <string name="no_data_available">Keine Daten verfügbar</string>
 </resources>

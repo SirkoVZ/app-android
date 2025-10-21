@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- themes.xml -->
-<!-- Datei: app/src/main/res/values/themes.xml -->
-
 <resources>
-    <!-- Base application theme (wird von Compose überschrieben) -->
+    <!-- Minimales Theme für Compose-Apps -->
     <style name="Theme.VolkszaehlerApp" parent="android:Theme.Material.Light.NoActionBar">
-        <!-- Compose übernimmt das komplette Theming -->
+        <!-- Transparent system bars for edge-to-edge -->
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
     </style>
 </resources>

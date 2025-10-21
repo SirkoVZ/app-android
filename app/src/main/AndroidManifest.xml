@@ -1,66 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- AndroidManifest.xml mit Deep Links UND App Links -->
-<!-- Datei: app/src/main/AndroidManifest.xml -->
-
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- ========== PERMISSIONS ========== -->
+    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
-        android:name=".VolkszaehlerApplication"
+        android:name=".VolkszaehlerApp"
         android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.VolkszaehlerApp"
         android:usesCleartextTraffic="true"
-        tools:targetApi="31"
-        tools:ignore="GoogleAppIndexingWarning">
+        tools:targetApi="31">
 
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.VolkszaehlerApp"
-            android:launchMode="singleTask">
-
-            <!-- 1. App Launcher -->
+            android:theme="@style/Theme.VolkszaehlerApp">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- 2. Deep Links (Custom Scheme) -->
-            <!-- Beispiel: volkszaehler://channel/abc-123 -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="volkszaehler"
-                    android:host="channel" />
-            </intent-filter>
-
-            <!-- 3. App Links (HTTPS) - OPTIONAL -->
-            <!-- Nur aktivieren, wenn du eine Domain hast! -->
-            <!-- Beispiel: https://volkszaehler.org/channel/abc-123 -->
-            <!--
-            <intent-filter android:autoVerify="true">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:scheme="https"
-                    android:host="volkszaehler.org"
-                    android:pathPrefix="/channel" />
-            </intent-filter>
-            -->
-
         </activity>
-
     </application>
 
 </manifest>

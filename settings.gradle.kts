@@ -1,5 +1,3 @@
-// Diese Datei definiert die Projekt-Settings und Plugin-Repositories
-
 pluginManagement {
     repositories {
         google()
@@ -13,8 +11,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        // Für MPAndroidChart (falls du das nutzen willst)
-        maven { url = uri("https://jitpack.io") }
     }
 }
 

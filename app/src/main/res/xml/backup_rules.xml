@@ -1,19 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- backup_rules.xml -->
-<!-- Datei: app/src/main/res/xml/backup_rules.xml -->
-<!-- Android 11 und älter (API 30-) Backup Rules -->
-
 <full-backup-content>
-    <!-- SharedPreferences sichern -->
-    <include domain="sharedpref" path="."/>
+    <!-- Exclude specific files or directories from backup -->
+    <!-- Example: <exclude domain="sharedpref" path="device_preferences.xml"/> -->
 
-    <!-- Database sichern -->
-    <include domain="database" path="."/>
-
-    <!-- Interne Dateien sichern -->
+    <!-- Include everything by default -->
     <include domain="file" path="."/>
-
-    <!-- Sensible Daten ausschließen -->
-    <exclude domain="sharedpref" path="auth_tokens.xml"/>
-    <exclude domain="database" path="secure.db"/>
+    <include domain="database" path="."/>
+    <include domain="sharedpref" path="."/>
+    <include domain="external" path="."/>
 </full-backup-content>

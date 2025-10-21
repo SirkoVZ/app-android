@@ -1,32 +1,32 @@
-// MainActivity.kt
-// Datei: app/src/main/java/org/volkszaehler/volkszaehlerapp/MainActivity.kt
-
 package org.volkszaehler.volkszaehlerapp
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import org.volkszaehler.volkszaehlerapp.ui.navigation.VolkszaehlerNavHost
+import org.volkszaehler.volkszaehlerapp.ui.navigation.NavGraph
 import org.volkszaehler.volkszaehlerapp.ui.theme.VolkszaehlerTheme
 
+/**
+ * Main Activity for the Volkszähler App
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-
         setContent {
             VolkszaehlerTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    VolkszaehlerNavHost(
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    val navController = rememberNavController()
+                    NavGraph(navController = navController)
                 }
             }
         }
