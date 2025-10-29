@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import org.volkszaehler.volkszaehlerapp.domain.model.Channel
 import org.volkszaehler.volkszaehlerapp.domain.model.ChannelData
 import org.volkszaehler.volkszaehlerapp.domain.repository.ChannelRepository
+import org.volkszaehler.volkszaehlerapp.util.Result
 import javax.inject.Inject
 
 /**
@@ -32,38 +33,50 @@ class ChannelDetailViewModel @Inject constructor(
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    /**
+     * Loads channel information (without data)
+     */
     fun loadChannel(uuid: String) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
 
             repository.getChannel(uuid).collect { result ->
-                result.fold(
-                    onSuccess = { channel ->
-                        _channel.value = channel
-                        _isLoading.value = false
-                    },
-                    onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to load channel"
+                when (result) {
+                    is Result.Success -> {
+                        _channel.value = result.data
                         _isLoading.value = false
                     }
-                )
+                    is Result.Error -> {
+                        _error.value = result.message
+                        _isLoading.value = false
+                    }
+                    is Result.Loading -> {
+                        _isLoading.value = true
+                    }
+                }
             }
         }
     }
 
-    fun loadChannelData(uuid: String) {
+    /**
+     * Loads channel data (measurements)
+     */
+    fun loadChannelData(uuid: String, from: Long? = null, to: Long? = null, tuples: Int? = null) {
         viewModelScope.launch {
-            repository.getChannelData(uuid).collect { result ->
-                result.fold(
-                    onSuccess = { data ->
-                        _channelData.value = data
-                    },
-                    onFailure = { exception ->
-                        // Optional: Handle data loading error separately
-                        _error.value = exception.message ?: "Failed to load data"
+            repository.getChannelData(uuid, from, to, tuples).collect { result ->
+                when (result) {
+                    is Result.Success -> {
+                        // ✅ getChannelData gibt jetzt ChannelData zurück (nicht Channel!)
+                        _channelData.value = result.data
                     }
-                )
+                    is Result.Error -> {
+                        _error.value = result.message
+                    }
+                    is Result.Loading -> {
+                        // Optional: separate loading state für data
+                    }
+                }
             }
         }
     }

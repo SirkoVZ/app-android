@@ -5,7 +5,7 @@ package org.volkszaehler.volkszaehlerapp.domain.model
  */
 data class Channel(
     val uuid: String,
-    val type: ChannelType,
+    val type: String,
     val title: String,
     val description: String?,
     val color: String?,
@@ -13,7 +13,10 @@ data class Channel(
     val unit: String,
     val cost: Double?,
     val initialValue: Double?,
-    val children: List<Channel>
+    val children: List<Channel>,
+
+    // ✅ NEU: Optional data field for measurements
+    val data: ChannelData? = null
 )
 
 /**

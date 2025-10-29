@@ -3,29 +3,26 @@ package org.volkszaehler.volkszaehlerapp.data.remote.dto
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
-/**
- * Response wrapper für /entity.json
- * ⚠️ WICHTIG: Die API gibt "entities" (Plural) zurück, nicht "entity"!
- */
 @JsonClass(generateAdapter = true)
-data class ChannelResponseDto(
+data class EntitiesResponse(
     @Json(name = "version")
     val version: String?,
+
     @Json(name = "entities")
-    val entities: List<ChannelDto>?
+    val entities: List<EntityDto>?
 )
 
 /**
- * Channel DTO - basierend auf der tatsächlichen API-Struktur
- * ⚠️ Alle Felder sind DIREKT im Entity, KEINE verschachtelten "properties"!
+ * EntityDto - Vollständige Struktur für Public & Private Entities
+ * ⚠️ WICHTIG: Alle Felder sind optional, da verschiedene Entity-Typen unterschiedliche Felder haben
  */
 @JsonClass(generateAdapter = true)
-data class ChannelDto(
+data class EntityDto(
     @Json(name = "uuid")
     val uuid: String,
 
     @Json(name = "type")
-    val type: String?,
+    val type: String,
 
     @Json(name = "title")
     val title: String?,
@@ -40,19 +37,19 @@ data class ChannelDto(
     val style: String?,
 
     @Json(name = "public")
-    val isPublic: Boolean?,
+    val public: Boolean?,
 
     @Json(name = "active")
     val active: Boolean?,
 
     @Json(name = "resolution")
-    val resolution: Int?,
+    val resolution: Double?,
 
     @Json(name = "cost")
     val cost: Double?,
 
     @Json(name = "initialconsumption")
-    val initialConsumption: Double?,
+    val initialValue: Double?,
 
     @Json(name = "tolerance")
     val tolerance: Double?,
@@ -69,7 +66,9 @@ data class ChannelDto(
     @Json(name = "yaxis")
     val yAxis: String?,
 
-    @Json(name = "children")
-    val children: List<ChannelDto>?
-)
+    @Json(name = "unit")
+    val unit: String?,
 
+    @Json(name = "children")
+    val children: List<EntityDto>?
+)

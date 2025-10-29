@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.volkszaehler.volkszaehlerapp.domain.model.Channel
 import org.volkszaehler.volkszaehlerapp.domain.repository.ChannelRepository
+import org.volkszaehler.volkszaehlerapp.util.Result
 import javax.inject.Inject
 
 /**
@@ -30,20 +31,22 @@ class ChannelListViewModel @Inject constructor(
 
     fun loadChannels() {
         viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
             repository.getChannels().collect { result ->
-                result.fold(
-                    onSuccess = { channelList ->
-                        _channels.value = channelList
+                when (result) {
+                    is Result.Success -> {
+                        _channels.value = result.data
                         _isLoading.value = false
-                    },
-                    onFailure = { exception ->
-                        _error.value = exception.message ?: "Failed to load channels"
+                        _error.value = null
+                    }
+                    is Result.Error -> {
+                        _error.value = result.message
                         _isLoading.value = false
                     }
-                )
+                    is Result.Loading -> {
+                        _isLoading.value = true
+                        _error.value = null
+                    }
+                }
             }
         }
     }

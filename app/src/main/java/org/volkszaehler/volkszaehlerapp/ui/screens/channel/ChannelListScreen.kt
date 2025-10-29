@@ -123,9 +123,9 @@ private fun ChannelItem(
                 style = MaterialTheme.typography.titleMedium
             )
 
-            // Type
+            // Type - ✅ KORRIGIERT: type ist ein String!
             Text(
-                text = channel.type.displayName,
+                text = channel.type,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

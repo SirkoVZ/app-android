@@ -3,17 +3,22 @@ package org.volkszaehler.volkszaehlerapp.ui.screens.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import org.volkszaehler.app.data.local.Settings
-import org.volkszaehler.app.data.local.SettingsDataStore
+import org.volkszaehler.volkszaehlerapp.data.local.Settings
+import org.volkszaehler.volkszaehlerapp.data.local.SettingsDataStore
+import org.volkszaehler.volkszaehlerapp.domain.repository.ChannelRepository
+import org.volkszaehler.volkszaehlerapp.util.Result
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsDataStore: SettingsDataStore
+    private val settingsDataStore: SettingsDataStore,
+    private val channelRepository: ChannelRepository
 ) : ViewModel() {
 
     val settings: StateFlow<Settings> = settingsDataStore.settings.stateIn(
@@ -22,69 +27,92 @@ class SettingsViewModel @Inject constructor(
         initialValue = Settings()
     )
 
+    private val _fetchChannelsState = MutableStateFlow<FetchChannelsState>(FetchChannelsState.Idle)
+    val fetchChannelsState: StateFlow<FetchChannelsState> = _fetchChannelsState.asStateFlow()
+
     fun updateServerUrl(url: String) {
         viewModelScope.launch {
             settingsDataStore.updateServerUrl(url)
         }
     }
 
-    fun updateDefaultPeriod(period: String) {
+    fun updateUsername(username: String) {
         viewModelScope.launch {
-            settingsDataStore.updateDefaultPeriod(period)
+            settingsDataStore.updateUsername(username)
         }
     }
 
-    fun updateChartType(type: String) {
+    fun updatePassword(password: String) {
         viewModelScope.launch {
-            settingsDataStore.updateChartType(type)
+            settingsDataStore.updatePassword(password)
         }
     }
 
-    fun updateEnableCache(enabled: Boolean) {
+    fun updateTuples(tuples: Int) {
         viewModelScope.launch {
-            settingsDataStore.updateEnableCache(enabled)
+            settingsDataStore.updateTuples(tuples)
         }
     }
 
-    fun updateCacheDuration(duration: Int) {
+    fun updateZeroBasedYAxis(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.updateCacheDuration(duration)
+            settingsDataStore.updateZeroBasedYAxis(enabled)
         }
     }
 
-    fun updateThemeMode(mode: String) {
+    fun updateAutoReload(enabled: Boolean) {
         viewModelScope.launch {
-            settingsDataStore.updateThemeMode(mode)
+            settingsDataStore.updateAutoReload(enabled)
         }
     }
 
-    fun updateUseDynamicColors(enabled: Boolean) {
+    fun updatePrivateChannelUUIDs(uuids: String) {
         viewModelScope.launch {
-            settingsDataStore.updateUseDynamicColors(enabled)
+            settingsDataStore.updatePrivateChannelUUIDs(uuids)
         }
     }
 
-    fun updateAutoRefresh(enabled: Boolean) {
+    fun updateSortChannelMode(mode: String) {
         viewModelScope.launch {
-            settingsDataStore.updateAutoRefresh(enabled)
+            settingsDataStore.updateSortChannelMode(mode)
         }
     }
 
-    fun updateRefreshInterval(interval: Int) {
+    fun fetchChannels() {
         viewModelScope.launch {
-            settingsDataStore.updateRefreshInterval(interval)
+            _fetchChannelsState.value = FetchChannelsState.Loading
+
+            val currentSettings = settings.value
+
+            channelRepository.fetchAllChannels(currentSettings.privateChannelUUIDs)
+                .collect { result ->
+                    when (result) {
+                        is Result.Loading -> {
+                            _fetchChannelsState.value = FetchChannelsState.Loading
+                        }
+                        is Result.Success -> {
+                            _fetchChannelsState.value = FetchChannelsState.Success(
+                                message = "Successfully fetched ${result.data.size} channels"
+                            )
+                        }
+                        is Result.Error -> {
+                            _fetchChannelsState.value = FetchChannelsState.Error(
+                                message = result.message
+                            )
+                        }
+                    }
+                }
         }
     }
 
-    fun updateShowGrid(show: Boolean) {
-        viewModelScope.launch {
-            settingsDataStore.updateShowGrid(show)
-        }
+    fun resetFetchChannelsState() {
+        _fetchChannelsState.value = FetchChannelsState.Idle
     }
+}
 
-    fun updateShowLegend(show: Boolean) {
-        viewModelScope.launch {
-            settingsDataStore.updateShowLegend(show)
-        }
-    }
+sealed class FetchChannelsState {
+    object Idle : FetchChannelsState()
+    object Loading : FetchChannelsState()
+    data class Success(val message: String) : FetchChannelsState()
+    data class Error(val message: String) : FetchChannelsState()
 }

@@ -2,17 +2,19 @@ package org.volkszaehler.volkszaehlerapp.data.local
 
 import android.content.Context
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @Singleton
 class SettingsDataStore @Inject constructor(
@@ -20,41 +22,27 @@ class SettingsDataStore @Inject constructor(
 ) {
     private object PreferencesKeys {
         val SERVER_URL = stringPreferencesKey("server_url")
-        val DEFAULT_PERIOD = stringPreferencesKey("default_period")
-        val CHART_TYPE = stringPreferencesKey("chart_type")
-        val ENABLE_CACHE = booleanPreferencesKey("enable_cache")
-        val CACHE_DURATION = intPreferencesKey("cache_duration")
-        val THEME_MODE = stringPreferencesKey("theme_mode")
-        val USE_DYNAMIC_COLORS = booleanPreferencesKey("use_dynamic_colors")
-        val AUTO_REFRESH = booleanPreferencesKey("auto_refresh")
-        val REFRESH_INTERVAL = intPreferencesKey("refresh_interval")
-        val SHOW_GRID = booleanPreferencesKey("show_grid")
-        val SHOW_LEGEND = booleanPreferencesKey("show_legend")
+        val USERNAME = stringPreferencesKey("username")
+        val PASSWORD = stringPreferencesKey("password")
+        val TUPLES = intPreferencesKey("tuples")
+        val ZERO_BASED_Y_AXIS = booleanPreferencesKey("zero_based_y_axis")
+        val AUTO_RELOAD = booleanPreferencesKey("auto_reload")
+        val PRIVATE_CHANNEL_UUIDS = stringPreferencesKey("private_channel_uuids")
+        val SORT_CHANNEL_MODE = stringPreferencesKey("sort_channel_mode")
     }
 
-    val settings: Flow<Settings> = context.dataStore.data
-        .catch { exception ->
-            if (exception is IOException) {
-                emit(emptyPreferences())
-            } else {
-                throw exception
-            }
-        }
-        .map { preferences ->
-            Settings(
-                serverUrl = preferences[PreferencesKeys.SERVER_URL] ?: "",
-                defaultPeriod = preferences[PreferencesKeys.DEFAULT_PERIOD] ?: "day",
-                chartType = preferences[PreferencesKeys.CHART_TYPE] ?: "line",
-                enableCache = preferences[PreferencesKeys.ENABLE_CACHE] ?: true,
-                cacheDuration = preferences[PreferencesKeys.CACHE_DURATION] ?: 300,
-                themeMode = preferences[PreferencesKeys.THEME_MODE] ?: "system",
-                useDynamicColors = preferences[PreferencesKeys.USE_DYNAMIC_COLORS] ?: true,
-                autoRefresh = preferences[PreferencesKeys.AUTO_REFRESH] ?: false,
-                refreshInterval = preferences[PreferencesKeys.REFRESH_INTERVAL] ?: 30,
-                showGrid = preferences[PreferencesKeys.SHOW_GRID] ?: true,
-                showLegend = preferences[PreferencesKeys.SHOW_LEGEND] ?: true
-            )
-        }
+    val settings: Flow<Settings> = context.dataStore.data.map { preferences ->
+        Settings(
+            serverUrl = preferences[PreferencesKeys.SERVER_URL] ?: "https://demo.volkszaehler.org/middleware.php",
+            username = preferences[PreferencesKeys.USERNAME] ?: "",
+            password = preferences[PreferencesKeys.PASSWORD] ?: "",
+            tuples = preferences[PreferencesKeys.TUPLES] ?: 1000,
+            zeroBasedYAxis = preferences[PreferencesKeys.ZERO_BASED_Y_AXIS] ?: false,
+            autoReload = preferences[PreferencesKeys.AUTO_RELOAD] ?: false,
+            privateChannelUUIDs = preferences[PreferencesKeys.PRIVATE_CHANNEL_UUIDS] ?: "",
+            sortChannelMode = preferences[PreferencesKeys.SORT_CHANNEL_MODE] ?: "off"
+        )
+    }
 
     suspend fun updateServerUrl(url: String) {
         context.dataStore.edit { preferences ->
@@ -62,77 +50,45 @@ class SettingsDataStore @Inject constructor(
         }
     }
 
-    suspend fun updateDefaultPeriod(period: String) {
+    suspend fun updateUsername(username: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.DEFAULT_PERIOD] = period
+            preferences[PreferencesKeys.USERNAME] = username
         }
     }
 
-    suspend fun updateChartType(type: String) {
+    suspend fun updatePassword(password: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.CHART_TYPE] = type
+            preferences[PreferencesKeys.PASSWORD] = password
         }
     }
 
-    suspend fun updateEnableCache(enabled: Boolean) {
+    suspend fun updateTuples(tuples: Int) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.ENABLE_CACHE] = enabled
+            preferences[PreferencesKeys.TUPLES] = tuples
         }
     }
 
-    suspend fun updateCacheDuration(duration: Int) {
+    suspend fun updateZeroBasedYAxis(enabled: Boolean) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.CACHE_DURATION] = duration
+            preferences[PreferencesKeys.ZERO_BASED_Y_AXIS] = enabled
         }
     }
 
-    suspend fun updateThemeMode(mode: String) {
+    suspend fun updateAutoReload(enabled: Boolean) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.THEME_MODE] = mode
+            preferences[PreferencesKeys.AUTO_RELOAD] = enabled
         }
     }
 
-    suspend fun updateUseDynamicColors(enabled: Boolean) {
+    suspend fun updatePrivateChannelUUIDs(uuids: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.USE_DYNAMIC_COLORS] = enabled
+            preferences[PreferencesKeys.PRIVATE_CHANNEL_UUIDS] = uuids
         }
     }
 
-    suspend fun updateAutoRefresh(enabled: Boolean) {
+    suspend fun updateSortChannelMode(mode: String) {
         context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.AUTO_REFRESH] = enabled
-        }
-    }
-
-    suspend fun updateRefreshInterval(interval: Int) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.REFRESH_INTERVAL] = interval
-        }
-    }
-
-    suspend fun updateShowGrid(show: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.SHOW_GRID] = show
-        }
-    }
-
-    suspend fun updateShowLegend(show: Boolean) {
-        context.dataStore.edit { preferences ->
-            preferences[PreferencesKeys.SHOW_LEGEND] = show
+            preferences[PreferencesKeys.SORT_CHANNEL_MODE] = mode
         }
     }
 }
-
-data class Settings(
-    val serverUrl: String = "",
-    val defaultPeriod: String = "day",
-    val chartType: String = "line",
-    val enableCache: Boolean = true,
-    val cacheDuration: Int = 300,
-    val themeMode: String = "system",
-    val useDynamicColors: Boolean = true,
-    val autoRefresh: Boolean = false,
-    val refreshInterval: Int = 30,
-    val showGrid: Boolean = true,
-    val showLegend: Boolean = true
-)

@@ -1,17 +1,19 @@
 package org.volkszaehler.volkszaehlerapp.ui.screens.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -19,370 +21,250 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
-    val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsState()
+    val fetchChannelsState by viewModel.fetchChannelsState.collectAsState()
+
+    var serverUrl by remember { mutableStateOf(settings.serverUrl) }
+    var username by remember { mutableStateOf(settings.username) }
+    var password by remember { mutableStateOf(settings.password) }
+    var tuples by remember { mutableStateOf(settings.tuples.toString()) }
+    var privateChannelUUIDs by remember { mutableStateOf(settings.privateChannelUUIDs) }
+    var zeroBasedYAxis by remember { mutableStateOf(settings.zeroBasedYAxis) }
+    var autoReload by remember { mutableStateOf(settings.autoReload) }
+    var sortChannelMode by remember { mutableStateOf(settings.sortChannelMode) }
+
+    // Update local state when settings change
+    LaunchedEffect(settings) {
+        serverUrl = settings.serverUrl
+        username = settings.username
+        password = settings.password
+        tuples = settings.tuples.toString()
+        privateChannelUUIDs = settings.privateChannelUUIDs
+        zeroBasedYAxis = settings.zeroBasedYAxis
+        autoReload = settings.autoReload
+        sortChannelMode = settings.sortChannelMode
+    }
+
+    // Show snackbar for fetch channels state
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(fetchChannelsState) {
+        when (val state = fetchChannelsState) {
+            is FetchChannelsState.Success -> {
+                snackbarHostState.showSnackbar(state.message)
+                viewModel.resetFetchChannelsState()
+            }
+            is FetchChannelsState.Error -> {
+                snackbarHostState.showSnackbar("Error: ${state.message}")
+                viewModel.resetFetchChannelsState()
+            }
+            else -> {}
+        }
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Einstellungen") },
+                title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Zurück"
-                        )
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
-        LazyColumn(
+        Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Server Einstellungen
-            item {
-                SettingsSection(title = "Server")
-            }
-
-            item {
-                ServerUrlSetting(
-                    serverUrl = settings.serverUrl,
-                    onServerUrlChange = viewModel::updateServerUrl
-                )
-            }
-
-            // Diagramm Einstellungen
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsSection(title = "Diagramm")
-            }
-
-            item {
-                DropdownSetting(
-                    title = "Standard-Zeitraum",
-                    selectedValue = settings.defaultPeriod,
-                    options = listOf(
-                        "hour" to "Stunde",
-                        "day" to "Tag",
-                        "week" to "Woche",
-                        "month" to "Monat",
-                        "year" to "Jahr"
-                    ),
-                    onValueChange = viewModel::updateDefaultPeriod
-                )
-            }
-
-            item {
-                DropdownSetting(
-                    title = "Diagrammtyp",
-                    selectedValue = settings.chartType,
-                    options = listOf(
-                        "line" to "Linie",
-                        "bar" to "Balken",
-                        "area" to "Fläche"
-                    ),
-                    onValueChange = viewModel::updateChartType
-                )
-            }
-
-            item {
-                SwitchSetting(
-                    title = "Gitter anzeigen",
-                    description = "Zeigt Gitterlinien im Diagramm an",
-                    checked = settings.showGrid,
-                    onCheckedChange = viewModel::updateShowGrid
-                )
-            }
-
-            item {
-                SwitchSetting(
-                    title = "Legende anzeigen",
-                    description = "Zeigt die Legende im Diagramm an",
-                    checked = settings.showLegend,
-                    onCheckedChange = viewModel::updateShowLegend
-                )
-            }
-
-            // Cache Einstellungen
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsSection(title = "Cache")
-            }
-
-            item {
-                SwitchSetting(
-                    title = "Cache aktivieren",
-                    description = "Speichert Daten lokal für schnelleren Zugriff",
-                    checked = settings.enableCache,
-                    onCheckedChange = viewModel::updateEnableCache
-                )
-            }
-
-            if (settings.enableCache) {
-                item {
-                    SliderSetting(
-                        title = "Cache-Dauer",
-                        description = "${settings.cacheDuration} Sekunden",
-                        value = settings.cacheDuration.toFloat(),
-                        valueRange = 60f..3600f,
-                        steps = 0,
-                        onValueChange = { viewModel.updateCacheDuration(it.toInt()) }
-                    )
-                }
-            }
-
-            // Aktualisierung
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsSection(title = "Aktualisierung")
-            }
-
-            item {
-                SwitchSetting(
-                    title = "Automatische Aktualisierung",
-                    description = "Aktualisiert Daten automatisch",
-                    checked = settings.autoRefresh,
-                    onCheckedChange = viewModel::updateAutoRefresh
-                )
-            }
-
-            if (settings.autoRefresh) {
-                item {
-                    SliderSetting(
-                        title = "Aktualisierungsintervall",
-                        description = "${settings.refreshInterval} Sekunden",
-                        value = settings.refreshInterval.toFloat(),
-                        valueRange = 10f..300f,
-                        steps = 0,
-                        onValueChange = { viewModel.updateRefreshInterval(it.toInt()) }
-                    )
-                }
-            }
-
-            // Darstellung
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-                SettingsSection(title = "Darstellung")
-            }
-
-            item {
-                DropdownSetting(
-                    title = "Theme",
-                    selectedValue = settings.themeMode,
-                    options = listOf(
-                        "light" to "Hell",
-                        "dark" to "Dunkel",
-                        "system" to "System"
-                    ),
-                    onValueChange = viewModel::updateThemeMode
-                )
-            }
-
-            item {
-                SwitchSetting(
-                    title = "Dynamische Farben",
-                    description = "Verwendet Systemfarben (Android 12+)",
-                    checked = settings.useDynamicColors,
-                    onCheckedChange = viewModel::updateUseDynamicColors
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun SettingsSection(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(vertical = 8.dp)
-    )
-}
-
-@Composable
-private fun SwitchSetting(
-    title: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
+                .padding(paddingValues)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange
-            )
-        }
-    }
-}
-
-@Composable
-private fun ServerUrlSetting(
-    serverUrl: String,
-    onServerUrlChange: (String) -> Unit
-) {
-    var text by remember(serverUrl) { mutableStateOf(serverUrl) }
-    var isEditing by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+            // Server Configuration Section
             Text(
-                text = "Server URL",
-                style = MaterialTheme.typography.bodyLarge
+                text = "Server Configuration",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
-            Spacer(modifier = Modifier.height(8.dp))
+
             OutlinedTextField(
-                value = text,
+                value = serverUrl,
                 onValueChange = {
-                    text = it
-                    isEditing = true
+                    serverUrl = it
+                    viewModel.updateServerUrl(it)
                 },
+                label = { Text("Server URL") },
+                placeholder = { Text("https://demo.volkszaehler.org/middleware.php") },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("https://demo.volkszaehler.org") },
                 singleLine = true
             )
-            if (isEditing) {
-                Row(
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = {
+                    username = it
+                    viewModel.updateUsername(it)
+                },
+                label = { Text("Username (optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
+            )
+
+            OutlinedTextField(
+                value = password,
+                onValueChange = {
+                    password = it
+                    viewModel.updatePassword(it)
+                },
+                label = { Text("Password (optional)") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation()
+            )
+
+            Divider()
+
+            // Channel Configuration Section
+            Text(
+                text = "Channel Configuration",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
+            )
+
+            OutlinedTextField(
+                value = privateChannelUUIDs,
+                onValueChange = {
+                    privateChannelUUIDs = it
+                    viewModel.updatePrivateChannelUUIDs(it)
+                },
+                label = { Text("Private Channel UUIDs") },
+                placeholder = { Text("uuid1, uuid2, uuid3") },
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = { Text("Comma-separated list of UUIDs") }
+            )
+
+            // Sort Mode Dropdown
+            var expandedSortMode by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = expandedSortMode,
+                onExpandedChange = { expandedSortMode = !expandedSortMode }
+            ) {
+                OutlinedTextField(
+                    value = when (sortChannelMode) {
+                        "off" -> "No sorting"
+                        "groups" -> "Sort by groups"
+                        "plain" -> "Plain sorting"
+                        else -> "No sorting"
+                    },
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Sort Channel Mode") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedSortMode) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    horizontalArrangement = Arrangement.End
+                        .menuAnchor()
+                )
+                ExposedDropdownMenu(
+                    expanded = expandedSortMode,
+                    onDismissRequest = { expandedSortMode = false }
                 ) {
-                    TextButton(onClick = {
-                        text = serverUrl
-                        isEditing = false
-                    }) {
-                        Text("Abbrechen")
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Button(onClick = {
-                        onServerUrlChange(text)
-                        isEditing = false
-                    }) {
-                        Text("Speichern")
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DropdownSetting(
-    title: String,
-    selectedValue: String,
-    options: List<Pair<String, String>>,
-    onValueChange: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        onClick = { expanded = true }
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                text = options.find { it.first == selectedValue }?.second ?: selectedValue,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                options.forEach { (value, label) ->
                     DropdownMenuItem(
-                        text = { Text(label) },
+                        text = { Text("No sorting") },
                         onClick = {
-                            onValueChange(value)
-                            expanded = false
-                        },
-                        leadingIcon = if (value == selectedValue) {
-                            {
-                                Icon(
-                                    imageVector = Icons.Default.Check,
-                                    contentDescription = null
-                                )
-                            }
-                        } else null
+                            sortChannelMode = "off"
+                            viewModel.updateSortChannelMode("off")
+                            expandedSortMode = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Sort by groups") },
+                        onClick = {
+                            sortChannelMode = "groups"
+                            viewModel.updateSortChannelMode("groups")
+                            expandedSortMode = false
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Plain sorting") },
+                        onClick = {
+                            sortChannelMode = "plain"
+                            viewModel.updateSortChannelMode("plain")
+                            expandedSortMode = false
+                        }
                     )
                 }
             }
-        }
-    }
-}
 
-@Composable
-private fun SliderSetting(
-    title: String,
-    description: String,
-    value: Float,
-    valueRange: ClosedFloatingPointRange<Float>,
-    steps: Int,
-    onValueChange: (Float) -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+            // Fetch Channels Button
+            Button(
+                onClick = { viewModel.fetchChannels() },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = fetchChannelsState !is FetchChannelsState.Loading
+            ) {
+                if (fetchChannelsState is FetchChannelsState.Loading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (fetchChannelsState is FetchChannelsState.Loading) "Loading..." else "Fetch Channels")
+            }
+
+            Divider()
+
+            // Display Configuration Section
             Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge
+                text = "Display Configuration",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary
             )
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+
+            OutlinedTextField(
+                value = tuples,
+                onValueChange = {
+                    tuples = it
+                    it.toIntOrNull()?.let { value ->
+                        viewModel.updateTuples(value)
+                    }
+                },
+                label = { Text("Tuples") },
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
             )
-            Slider(
-                value = value,
-                onValueChange = onValueChange,
-                valueRange = valueRange,
-                steps = steps,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Zero-based Y-Axis")
+                Switch(
+                    checked = zeroBasedYAxis,
+                    onCheckedChange = {
+                        zeroBasedYAxis = it
+                        viewModel.updateZeroBasedYAxis(it)
+                    }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text("Auto Reload")
+                Switch(
+                    checked = autoReload,
+                    onCheckedChange = {
+                        autoReload = it
+                        viewModel.updateAutoReload(it)
+                    }
+                )
+            }
         }
     }
 }

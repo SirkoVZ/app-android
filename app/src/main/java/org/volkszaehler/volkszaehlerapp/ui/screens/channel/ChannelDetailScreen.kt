@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import org.volkszaehler.volkszaehlerapp.domain.model.Channel
 import org.volkszaehler.volkszaehlerapp.domain.model.ChannelData
+import org.volkszaehler.volkszaehlerapp.domain.model.ChannelType
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -137,7 +138,8 @@ private fun ChannelInfoCard(channel: Channel) {
                 style = MaterialTheme.typography.titleLarge
             )
 
-            InfoRow("Type", channel.type.displayName)
+            // ✅ KORRIGIERT: Konvertiere String zu ChannelType Enum
+            InfoRow("Type", ChannelType.fromString(channel.type).displayName)
             InfoRow("UUID", channel.uuid)
             InfoRow("Unit", channel.unit)
 

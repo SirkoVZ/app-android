@@ -6,7 +6,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
-import org.volkszaehler.app.data.local.SettingsDataStore
+import org.volkszaehler.volkszaehlerapp.data.local.SettingsDataStore
 import javax.inject.Singleton
 
 @Module
